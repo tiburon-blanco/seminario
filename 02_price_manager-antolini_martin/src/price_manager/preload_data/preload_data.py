@@ -1,8 +1,8 @@
 """Funciones de precarga de datos iniciales y lectura desde archivos CSV."""
 
-import os
 import csv
 import datetime
+import os
 from datetime import date
 
 from price_manager.entities.entities import (
@@ -129,8 +129,8 @@ productos_iniciales = [
 # STOCK INICIAL
 # ============================================================
 # Lista plana para generación de stock.csv.
-# Esta lista evita problemas al importar el módulo y permite generar
-# correctamente el archivo CSV de stock para las migraciones.
+# Se evita instanciar Stock en la carga inicial para no romper
+# el import si cambia la firma de la entidad Stock.
 
 stock_inicial_csv = [
     {"producto_id": 1, "cantidad": 50},
@@ -141,10 +141,12 @@ stock_inicial_csv = [
 ]
 
 # Alias de compatibilidad.
-# Se evita instanciar Stock en la carga inicial para no romper el import
-# si cambia la firma de la entidad Stock.
 stock_inicial = stock_inicial_csv
 
+
+# ============================================================
+# COTIZACIONES INICIALES
+# ============================================================
 
 cotizaciones_dolar_iniciales = [
     CotizacionDolar(
@@ -178,6 +180,7 @@ cotizaciones_dolar_iniciales = [
         valor=710.0,
     ),
 ]
+
 
 # ============================================================
 # FUNCIONES DE PRECARGA DESDE CSV
@@ -323,13 +326,13 @@ def precargar_datos(
 
             fecha = datetime.date.fromisoformat(fila["fecha"])
 
-              CotizacionDolar(
-    tipo=tipo,
-    fecha=fecha,
-    valor=float(fila["valor"]),
-    )          
+            cotizacion = CotizacionDolar(
+                tipo=tipo,
+                fecha=fecha,
+                valor=float(fila["valor"]),
+            )
 
-repo_cotizacion.crear(cotizacion)
+            repo_cotizacion.crear(cotizacion)
 
         except ValueError:
             pass
