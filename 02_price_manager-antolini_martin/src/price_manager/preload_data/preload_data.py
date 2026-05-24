@@ -126,8 +126,11 @@ productos_iniciales = [
 
 
 # ============================================================
-# Lista plana usada para generar stock.csv.
-# Esta es la lista que usa el notebook para migraciones.
+# STOCK INICIAL
+# ============================================================
+# Lista plana para generación de stock.csv.
+# Esta lista evita problemas al importar el módulo y permite generar
+# correctamente el archivo CSV de stock para las migraciones.
 
 stock_inicial_csv = [
     {"producto_id": 1, "cantidad": 50},
@@ -137,30 +140,10 @@ stock_inicial_csv = [
     {"producto_id": 5, "cantidad": 40},
 ]
 
-
-# Lista de objetos Stock para uso interno del dominio.
-# La entidad Stock recibe un Producto, no un producto_id.
-
-stock_inicial = [
-    Stock(productos_iniciales[0], 50),
-    Stock(productos_iniciales[1], 120),
-    Stock(productos_iniciales[2], 30),
-    Stock(productos_iniciales[3], 80),
-    Stock(productos_iniciales[4], 40),
-]
-
-
-# Lista de objetos Stock para uso interno, si la entidad Stock recibe Producto.
-try:
-    stock_inicial = [
-        Stock(productos_iniciales[0], 50),
-        Stock(productos_iniciales[1], 120),
-        Stock(productos_iniciales[2], 30),
-        Stock(productos_iniciales[3], 80),
-        Stock(productos_iniciales[4], 40),
-    ]
-except TypeError:
-    stock_inicial = stock_inicial_csv
+# Alias de compatibilidad.
+# Se evita instanciar Stock en la carga inicial para no romper el import
+# si cambia la firma de la entidad Stock.
+stock_inicial = stock_inicial_csv
 
 
 cotizaciones_dolar_iniciales = [
