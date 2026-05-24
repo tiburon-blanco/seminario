@@ -148,37 +148,36 @@ stock_inicial = stock_inicial_csv
 
 cotizaciones_dolar_iniciales = [
     CotizacionDolar(
-        350.0,
-        fecha=date(2023, 10, 25),
         tipo=tipos_cotizacion_iniciales[0],
+        fecha=date(2023, 10, 25),
+        valor=350.0,
     ),
     CotizacionDolar(
-        900.0,
-        fecha=date(2023, 10, 25),
         tipo=tipos_cotizacion_iniciales[1],
-    ),
-    CotizacionDolar(
-        700.0,
         fecha=date(2023, 10, 25),
-        tipo=tipos_cotizacion_iniciales[2],
+        valor=900.0,
     ),
     CotizacionDolar(
-        350.5,
-        fecha=date(2023, 10, 26),
+        tipo=tipos_cotizacion_iniciales[2],
+        fecha=date(2023, 10, 25),
+        valor=700.0,
+    ),
+    CotizacionDolar(
         tipo=tipos_cotizacion_iniciales[0],
+        fecha=date(2023, 10, 26),
+        valor=350.5,
     ),
     CotizacionDolar(
-        910.0,
-        fecha=date(2023, 10, 26),
         tipo=tipos_cotizacion_iniciales[1],
+        fecha=date(2023, 10, 26),
+        valor=910.0,
     ),
     CotizacionDolar(
-        710.0,
-        fecha=date(2023, 10, 26),
         tipo=tipos_cotizacion_iniciales[2],
+        fecha=date(2023, 10, 26),
+        valor=710.0,
     ),
 ]
-
 
 # ============================================================
 # FUNCIONES DE PRECARGA DESDE CSV
@@ -324,11 +323,11 @@ def precargar_datos(
 
             fecha = datetime.date.fromisoformat(fila["fecha"])
 
-            cotizacion = CotizacionDolar(
-                float(fila["valor"]),
-                fecha=fecha,
-                tipo=tipo,
-            )
+          CotizacionDolar(
+    tipo=tipo,
+    fecha=fecha,
+    valor=float(fila["valor"]),
+)
 
             repo_cotizacion.crear(cotizacion)
 
