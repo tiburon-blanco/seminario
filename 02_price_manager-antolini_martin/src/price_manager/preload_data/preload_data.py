@@ -323,11 +323,11 @@ def precargar_datos(
 
             fecha = datetime.date.fromisoformat(fila["fecha"])
 
-          CotizacionDolar(
-    tipo=tipo,
-    fecha=fecha,
-    valor=float(fila["valor"]),
-)
+             CotizacionDolar(
+                tipo=tipo,
+                fecha=fecha,
+                valor=float(fila["valor"]),
+                )          
 
             repo_cotizacion.crear(cotizacion)
 
