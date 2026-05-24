@@ -125,14 +125,28 @@ productos_iniciales = [
 ]
 
 
-# Lista plana para generación de stock.csv.
-# Esta lista evita problemas de serialización del objeto Stock.
+# ============================================================
+# Lista plana usada para generar stock.csv.
+# Esta es la lista que usa el notebook para migraciones.
+
 stock_inicial_csv = [
     {"producto_id": 1, "cantidad": 50},
     {"producto_id": 2, "cantidad": 120},
     {"producto_id": 3, "cantidad": 30},
     {"producto_id": 4, "cantidad": 80},
     {"producto_id": 5, "cantidad": 40},
+]
+
+
+# Lista de objetos Stock para uso interno del dominio.
+# La entidad Stock recibe un Producto, no un producto_id.
+
+stock_inicial = [
+    Stock(productos_iniciales[0], 50),
+    Stock(productos_iniciales[1], 120),
+    Stock(productos_iniciales[2], 30),
+    Stock(productos_iniciales[3], 80),
+    Stock(productos_iniciales[4], 40),
 ]
 
 
