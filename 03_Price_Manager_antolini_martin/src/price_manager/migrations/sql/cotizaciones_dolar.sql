@@ -1,0 +1,10 @@
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1090', '2026-04-13', '1');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1185', '2026-04-13', '2');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1112', '2026-04-13', '9');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1095', '2026-04-14', '1');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1190', '2026-04-14', '2');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1115', '2026-04-14', '9');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1100', '2026-04-15', '1');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1198', '2026-04-15', '2');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1120', '2026-04-15', '9');
+INSERT INTO cotizaciones_dolar (valor, fecha, tipo_id) VALUES ('1108', '2026-04-16', '1');

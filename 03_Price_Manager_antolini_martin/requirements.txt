@@ -1,0 +1,6 @@
+SQLAlchemy
+requests
+python-dotenv
+scrapy
+pandas
+openpyxl
