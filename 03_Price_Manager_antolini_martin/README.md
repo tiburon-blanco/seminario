@@ -81,9 +81,55 @@ las operaciones realizadas por el sistema.
 
 ## Instalacion
 
+Para ejecutar el proyecto en entorno local se recomienda crear un entorno virtual dentro de la carpeta del proyecto.
+
+Desde la carpeta:
+
 ```bash
-pip install -r requirements.txt
+03_Price_Manager_antolini_martin/
 ```
+
+crear el entorno virtual:
+
+```bash
+python -m venv .venv
+```
+
+Activar el entorno virtual en Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Si PowerShell impide la activacion del entorno, ejecutar una vez:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Luego volver a activar:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Con el entorno virtual activo, actualizar `pip` e instalar dependencias:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Verificar que las dependencias principales esten instaladas:
+
+```bash
+python -c "import sqlalchemy; print('OK SQLAlchemy')"
+python -c "import requests; print('OK requests')"
+python -c "import scrapy; print('OK scrapy')"
+python -c "import itemloaders; print('OK itemloaders')"
+```
+
+El entorno virtual `.venv/` no debe subirse al repositorio.
 
 ## Configuracion
 
@@ -93,40 +139,73 @@ Crear un archivo `.env` tomando como referencia `.env.example`:
 API_URL=https://dolarapi.com/v1/dolares
 ```
 
+Tambien se recomienda configurar la variable de entorno `PYTHONPATH` apuntando a la carpeta `src`.
+
+En Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"
+```
+
 ## Ejecucion Local
 
-Desde la carpeta del proyecto:
+Desde la carpeta del proyecto, con el entorno virtual activo:
 
-```bash
-set PYTHONPATH=src
+```powershell
+.\.venv\Scripts\Activate.ps1
+$env:PYTHONPATH="src"
 python -m price_manager.main
+```
+
+Tambien puede verificarse la importacion de modulos principales:
+
+```powershell
+python -c "from price_manager.migrations.migrations import cargar_datos_desde_sql; print('OK migrations')"
+python -c "from price_manager.scraper.items import StarComputacionItem; print('OK item')"
+python -c "from price_manager.scraper.loaders import StarComputacionLoader; print('OK loader')"
 ```
 
 ## Ejecucion En Google Colab
 
-El notebook debe clonar el repositorio, seleccionar la rama `Sprint_3`, instalar
-dependencias y ejecutar las funciones desde `src/price_manager`.
+El notebook de Colab debe clonar el repositorio, seleccionar la rama `Sprint_3`, instalar dependencias y ejecutar las funciones desde `src/price_manager`.
+
+En modo entrega no se requiere `GITHUB_TOKEN` si el repositorio es publico o si el docente ya tiene acceso al repositorio.
 
 ```python
-from google.colab import userdata
-GITHUB_TOKEN = userdata.get("GITHUB_TOKEN")
-```
-
-```python
-!git clone https://$GITHUB_TOKEN@github.com/tiburon-blanco/seminario.git
+!git clone https://github.com/tiburon-blanco/seminario.git
 %cd seminario
 !git checkout Sprint_3
 %cd 03_Price_Manager_antolini_martin
 !pip install -r requirements.txt
 ```
 
+Luego se configura el path del proyecto:
+
 ```python
 import sys
-sys.path.append("src")
+from pathlib import Path
 
+PROJECT_PATH = Path.cwd()
+SRC_PATH = PROJECT_PATH / "src"
+
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
+
+print("PROJECT_PATH:", PROJECT_PATH)
+print("SRC_PATH:", SRC_PATH)
+```
+
+Finalmente se puede importar y ejecutar el proyecto:
+
+```python
 from price_manager.main import main
+
 main(import_default_data=False)
 ```
+
+Si el repositorio fuera privado, el acceso mediante token debe configurarse en los secretos de Colab, evitando escribir el token directamente en el notebook.
+
+````
 
 ## Versionado
 
@@ -134,7 +213,7 @@ El desarrollo del Sprint 3 parte de la rama `Sprint_2` y se realiza en la rama:
 
 ```text
 Sprint_3
-```
+````
 
 La variable `desactivar_git_push` se mantiene en `main.py` para permitir el
 traceo requerido por la consigna.
