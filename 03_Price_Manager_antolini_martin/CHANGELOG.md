@@ -12,18 +12,113 @@
 - Se agrego la estructura inicial requerida para scraping:
   - `src/price_manager/scraper/`
   - `src/price_manager/scraper/spiders/`
+
 - Se actualizaron dependencias iniciales para scraping y reportes.
 - Se preparo el notebook Colab para clonar el repositorio, seleccionar la rama
   `Sprint_3` y configurar `PYTHONPATH`.
 
 ### Dia 2 - Carga desde SQL
 
+- Se agrego la funcion `cargar_datos_desde_sql` para ejecutar archivos `.sql`
+  individuales.
 - Se agrego la funcion `cargar_desde_sql` para ejecutar archivos `.sql` desde la
   carpeta de migraciones.
 - Se definio un orden de carga compatible con las claves foraneas del modelo
   relacional.
+- Se valido la existencia del archivo SQL antes de ejecutarlo.
+- Se valido que el archivo tenga extension `.sql`.
 - Se uso `INSERT OR IGNORE` para evitar duplicados al ejecutar la carga mas de
   una vez.
+- Se verifico la correcta compilacion e importacion del modulo `migrations.py`.
+- Se agregaron celdas en Colab para probar la carga desde SQL de forma
+  controlada.
+
+### Dia 3 - Scraper StarComputacionSpider
+
+- Se creo el modulo `scraper` dentro del paquete `price_manager`.
+- Se implemento el spider `StarComputacionSpider` utilizando Scrapy.
+- Se limito la busqueda a productos propios del sistema.
+- Se configuro el limite de 10 resultados por busqueda.
+- Se extrajeron los siguientes datos desde la web:
+  - Precio.
+  - URL de imagen.
+  - Formas de pago.
+  - Precio asociado a formas de pago.
+  - Descripcion detallada.
+  - URL del producto.
+  - Fuente de extraccion.
+
+- Se implemento `StarComputacionItem` para estructurar los datos extraidos.
+- Se implemento `StarComputacionLoader` para limpiar y normalizar textos,
+  precios y descripciones.
+- Se implementaron pipelines para:
+  - Validar datos minimos.
+  - Evitar duplicados por URL.
+  - Guardar resultados en formato JSON Lines.
+
+- Se agrego configuracion propia del scraper en `settings.py`.
+- Se creo `runner.py` para ejecutar el scraper desde Python o desde Colab.
+- Se actualizaron las dependencias del proyecto incorporando Scrapy e
+  ItemLoaders.
+- Se agrego una prueba controlada en Colab con HTML simulado para validar el
+  funcionamiento sin depender de un sitio externo.
+- Se dejo una ejecucion real opcional del scraper para evitar que el notebook
+  dependa obligatoriamente de la disponibilidad de la pagina web.
+
+### Dia 4 - Comparacion de precios y alertas
+
+- Se creo el servicio `price_alert_service.py`.
+- Se implemento la comparacion entre precio interno y precio web.
+- Se agrego una funcion para extraer precios numericos desde textos con formato
+  monetario.
+- Se permitio ingresar por usuario la diferencia maxima permitida antes de la
+  ejecucion.
+- Se calcularon los siguientes datos:
+  - Precio interno.
+  - Precio web.
+  - Diferencia en monto.
+  - Diferencia porcentual.
+  - Indicador de alerta.
+
+- Se genero un archivo CSV de alertas para analizar diferencias de precios.
+- Se preparo el CSV para ser descargado desde Colab.
+- Se agrego una ejecucion real opcional integrada con el scraper.
+- Se dejo una prueba controlada para que el notebook pueda ejecutarse completo
+  sin depender de la disponibilidad del sitio externo.
+
+### Dia 5 - Reporte Excel de precios
+
+- Se creo el servicio `excel_report_service.py`.
+- Se implemento la generacion de reportes Excel utilizando `openpyxl`.
+- Se genero un archivo `.xlsx` con los campos requeridos:
+  - Producto.
+  - Precio interno.
+  - Precio web.
+  - Diferencia.
+  - Fecha de extraccion.
+
+- Se incorporo formato basico al archivo Excel:
+  - Encabezados destacados.
+  - Ajuste automatico de ancho de columnas.
+  - Formato monetario en columnas de precios.
+
+- Se integro la lectura de resultados generados por el scraper.
+- Se reutilizo la logica de comparacion de precios del servicio de alertas.
+- Se agrego la posibilidad de descargar el reporte Excel desde Colab.
+- Se dejo una ejecucion real opcional integrada con el scraper.
+
+### Dia 6 - Documentacion y configuracion final
+
+- Se actualizo el archivo `README.md` con la descripcion del Sprint 3.
+- Se actualizo el archivo `CHANGELOG.md` con el detalle de los ejercicios
+  realizados.
+- Se actualizaron las dependencias en `requirements.txt`.
+- Se agrego configuracion en `.gitignore` para excluir entorno virtual, archivos
+  temporales, bases locales y carpetas de datos generadas.
+- Se mantuvo la separacion entre desarrollo real en VS Code y verificacion
+  reproducible en Google Colab.
+- Se verifico que el proyecto pueda ser ejecutado desde Colab clonando la rama
+  `Sprint_3`.
 
 ## Sprint 1
 
