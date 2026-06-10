@@ -6,6 +6,7 @@ import os
 
 import requests
 from dotenv import load_dotenv
+from price_manager.services.audit_service import auditar_clase_servicio
 
 from price_manager.entities.entities import (
   Categoria,
@@ -25,7 +26,7 @@ from price_manager.repositories.repositories import (
   RepositorioTipoCotizacion,
 )
 
-
+@auditar_clase_servicio
 class ServicioCategoria:
   """Aplica lógica de negocio para categorías."""
 

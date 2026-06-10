@@ -2,7 +2,7 @@
 
 import datetime
 
-from sqlalchemy import Date, Float, ForeignKey, Integer, String
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -96,3 +96,17 @@ class CotizacionDolarModel(Base):
   valor: Mapped[float] = mapped_column(Float, nullable=False)
 
   tipo: Mapped[TipoCotizacionModel] = relationship()
+  
+class AuditoriaModel(Base):
+  """Tabla de auditoria del sistema."""
+
+  __tablename__ = "auditorias"
+
+  id: Mapped[int] = mapped_column(Integer, primary_key=True)
+  accion: Mapped[str] = mapped_column(String(120), nullable=False)
+  fecha: Mapped[datetime.datetime] = mapped_column(
+    DateTime,
+    nullable=False,
+    default=datetime.datetime.now,
+  )
+  detalles: Mapped[str] = mapped_column(Text, nullable=False)

@@ -4,6 +4,7 @@ import csv
 import datetime
 import os
 from pathlib import Path
+from price_manager.services.audit_service import auditar_accion
 
 from sqlalchemy import text
 
@@ -66,7 +67,7 @@ def _orden_archivos_sql() -> list[str]:
     "cotizaciones_dolar.sql",
   ]
 
-
+@auditar_accion("cargar_datos_desde_sql")
 def cargar_datos_desde_sql(
   ruta_sql: str,
   conexion: ConexionDB | None = None,
@@ -112,7 +113,7 @@ def cargar_datos_desde_sql(
 
   return sentencias_ejecutadas
 
-
+@auditar_accion("cargar_desde_sql")  
 def cargar_desde_sql(
   carpeta_sqls: str,
   conexion: ConexionDB | None = None,
@@ -144,7 +145,7 @@ def cargar_desde_sql(
 
   return sentencias_ejecutadas
 
-
+@auditar_accion("migrar_datos")  
 def migrar_datos(carpeta_csvs: str, carpeta_sqls: str) -> None:
   """Migra los CSV del Sprint 1 a SQL y a la base de datos."""
   conexion = ConexionDB()

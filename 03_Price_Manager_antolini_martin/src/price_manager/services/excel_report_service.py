@@ -9,6 +9,7 @@ from typing import Any
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
+from price_manager.services.audit_service import auditar_accion
 
 from price_manager.services.price_alert_service import (
     comparar_item_web,
@@ -84,7 +85,7 @@ def ajustar_ancho_columnas(hoja) -> None:
 
         hoja.column_dimensions[letra_columna].width = largo_maximo + 3
 
-
+@auditar_accion("generar_reporte_excel_precios")
 def generar_reporte_excel_precios(
     ruta_resultados_web: str | Path,
     ruta_reporte_excel: str | Path,
@@ -156,7 +157,7 @@ def generar_reporte_excel_precios(
 
     return ruta_reporte_excel
 
-
+@auditar_accion("ejecutar_scraper_y_generar_reporte_excel")
 def ejecutar_scraper_y_generar_reporte_excel(
     productos: list[str] | None = None,
     limite_por_busqueda: int = 10,

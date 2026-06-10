@@ -7,6 +7,7 @@ from pathlib import Path
 
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
+from price_manager.services.audit_service import auditar_accion
 
 from price_manager.database.connection import ConexionDB
 from price_manager.repositories.repositories import RepositorioProducto
@@ -14,7 +15,7 @@ from price_manager.scraper.spiders.star_computacion_spider import (
   StarComputacionSpider,
 )
 
-
+@auditar_accion("obtener_nombres_productos_propios")
 def obtener_nombres_productos_propios() -> list[str]:
   """Obtiene los nombres de productos propios desde la base de datos."""
   ConexionDB().crear_tablas()
@@ -28,7 +29,7 @@ def obtener_nombres_productos_propios() -> list[str]:
     if getattr(producto, "nombre", None)
   ]
 
-
+@auditar_accion("ejecutar_scraper_star_computacion")
 def ejecutar_scraper_star_computacion(
   productos: list[str] | None = None,
   limite_por_busqueda: int = 10,
