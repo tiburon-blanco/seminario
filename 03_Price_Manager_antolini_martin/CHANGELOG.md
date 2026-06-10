@@ -147,6 +147,25 @@
 * Se realizo una prueba manual de registro de auditoria.
 * Se preparo una prueba del decorador para validar que una funcion auditada genere registros automaticamente.
 
+### Dia 7 - Opciones de menu Sprint 3
+
+- Se modifico el menu principal del sistema para integrar funcionalidades del Sprint 3.
+- Se agrego la opcion `Ejecutar scraping`.
+- Se agrego la opcion `Generar reporte`.
+- Se agrego la opcion `Ver historial de auditoria`.
+- Se vinculo la opcion de scraping con la ejecucion del `StarComputacionSpider`.
+- Se configuro la ejecucion del scraper con un limite de 10 resultados por busqueda.
+- Se genero el archivo de resultados web en formato JSON Lines.
+- Se vinculo la opcion de reporte con la generacion del archivo Excel de comparacion de precios.
+- Se incorporo la consulta del historial de auditorias desde el menu de consola.
+- Se permitio visualizar las ultimas auditorias registradas con:
+  - ID.
+  - Accion.
+  - Fecha.
+  - Detalles.
+
+- Se verifico que las opciones requeridas por la consigna se encuentren disponibles en la interfaz de consola.
+
 ## Sprint 1
 
 ### Dia 1 - Inicializacion y estructura base

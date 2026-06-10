@@ -1,4 +1,14 @@
 """Interfaz de usuario por consola para el sistema Price Manager."""
+from pathlib import Path
+
+from price_manager.scraper.runner import (
+  ejecutar_scraper_star_computacion,
+  leer_resultados_jsonl,
+)
+from price_manager.services.audit_service import listar_auditorias
+from price_manager.services.excel_report_service import (
+  generar_reporte_excel_precios,
+)
 
 import datetime
 import os
@@ -74,6 +84,9 @@ class ConsolaPriceManager:
     print("6. Obtener cotizaciones por API")
     print("7. Ver lista de precios bimonetaria")
     print("8. Exportar precios a CSV")
+    print("9. Ejecutar scraping")
+    print("10. Generar reporte")
+    print("11. Ver historial de auditoría")
     print("0. Salir")
 
   def ejecutar(self) -> None:
@@ -98,6 +111,12 @@ class ConsolaPriceManager:
         self.ver_precios_bimonetarios()
       elif opcion == "8":
         self.exportar_precios_csv()
+      elif opcion == "9":
+        opcion_ejecutar_scraping()
+      elif opcion == "10":
+        opcion_generar_reporte()
+      elif opcion == "11":
+        opcion_ver_historial_auditoria()
       elif opcion == "0":
         print("Saliendo del sistema...")
         break
@@ -159,6 +178,84 @@ class ConsolaPriceManager:
       except ValueError as error:
         print("Error:", error)
 
+def opcion_ejecutar_scraping() -> None:
+  """Ejecuta el scraper para los productos internos del sistema."""
+  print("\nEjecutar scraping")
+  print("-" * 60)
+
+  print("Se ejecutara el scraper usando productos propios del sistema.")
+  print("Limite configurado: 10 resultados por busqueda.")
+
+  output_path = Path("data/star_computacion_productos.jsonl")
+
+  try:
+    ruta_resultados = ejecutar_scraper_star_computacion(
+      productos=None,
+      limite_por_busqueda=10,
+      output_path=str(output_path),
+    )
+
+    resultados = leer_resultados_jsonl(ruta_resultados)
+
+    print("\nScraping finalizado correctamente.")
+    print(f"Archivo generado: {ruta_resultados}")
+    print(f"Cantidad de resultados obtenidos: {len(resultados)}")
+
+  except Exception as error:
+    print("\nNo se pudo ejecutar el scraping.")
+    print(f"Detalle del error: {error}")
+
+
+def opcion_generar_reporte() -> None:
+  """Genera el reporte Excel a partir de resultados del scraper."""
+  print("\nGenerar reporte Excel")
+  print("-" * 60)
+
+  ruta_resultados_web = Path("data/star_computacion_productos.jsonl")
+  ruta_reporte_excel = Path("data/reporte_precios.xlsx")
+
+  if not ruta_resultados_web.exists():
+    print("No existe el archivo de resultados del scraper.")
+    print("Primero debe ejecutarse la opcion 'Ejecutar scraping'.")
+    return
+
+  try:
+    ruta_generada = generar_reporte_excel_precios(
+      ruta_resultados_web=ruta_resultados_web,
+      ruta_reporte_excel=ruta_reporte_excel,
+      cotizacion_usd=1000.0,
+    )
+
+    print("\nReporte generado correctamente.")
+    print(f"Archivo Excel: {ruta_generada}")
+
+  except Exception as error:
+    print("\nNo se pudo generar el reporte.")
+    print(f"Detalle del error: {error}")
+
+
+def opcion_ver_historial_auditoria() -> None:
+  """Muestra las ultimas auditorias registradas."""
+  print("\nHistorial de auditoria")
+  print("-" * 60)
+
+  try:
+    auditorias = listar_auditorias(20)
+
+    if not auditorias:
+      print("No hay auditorias registradas.")
+      return
+
+    for auditoria in auditorias:
+      print(f"ID: {auditoria['id']}")
+      print(f"Accion: {auditoria['accion']}")
+      print(f"Fecha: {auditoria['fecha']}")
+      print(f"Detalles: {auditoria['detalles']}")
+      print("-" * 60)
+
+  except Exception as error:
+    print("\nNo se pudo consultar el historial de auditoria.")
+    print(f"Detalle del error: {error}")
 
 def iniciar_menu() -> None:
   """Inicia el menu interactivo de Price Manager."""
