@@ -107,7 +107,7 @@
 - Se agrego la posibilidad de descargar el reporte Excel desde Colab.
 - Se dejo una ejecucion real opcional integrada con el scraper.
 
-### Dia 6 - Documentacion y configuracion final
+### - Documentacion y configuracion final
 
 - Se actualizo el archivo `README.md` con la descripcion del Sprint 3.
 - Se actualizo el archivo `CHANGELOG.md` con el detalle de los ejercicios
@@ -119,6 +119,33 @@
   reproducible en Google Colab.
 - Se verifico que el proyecto pueda ser ejecutado desde Colab clonando la rama
   `Sprint_3`.
+
+  ### Dia 6 - Auditoria del sistema
+
+* Se agrego la tabla `auditorias` al modelo ORM del sistema.
+* La tabla de auditoria registra los campos requeridos:
+  - Accion.
+  - Fecha.
+  - Detalles.
+
+* Se incorporo el modelo `AuditoriaModel` en `models.py`.
+* Se creo el servicio `audit_service.py` para centralizar la logica de auditoria.
+* Se implemento la funcion `registrar_auditoria` para guardar registros de auditoria en la base de datos.
+* Se implemento el decorador `@auditar_accion` para auditar funciones y metodos del sistema.
+* Se implemento el decorador de clase `@auditar_clase_servicio` para auditar automaticamente los metodos publicos de los servicios.
+* Se agrego la funcion `listar_auditorias` para consultar los ultimos registros generados.
+* Se modificaron los servicios principales para registrar auditorias en las operaciones del sistema.
+* Se incorporo auditoria en operaciones relacionadas con:
+  - Migraciones y carga desde SQL.
+  - Ejecucion del scraper.
+  - Lectura de resultados JSON Lines.
+  - Generacion de alertas CSV.
+  - Generacion de reportes Excel.
+
+* Se verifico la correcta importacion del modelo `AuditoriaModel`.
+* Se verifico la correcta importacion del servicio de auditoria.
+* Se realizo una prueba manual de registro de auditoria.
+* Se preparo una prueba del decorador para validar que una funcion auditada genere registros automaticamente.
 
 ## Sprint 1
 

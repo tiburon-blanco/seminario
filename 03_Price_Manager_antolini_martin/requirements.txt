@@ -4,5 +4,5 @@ python-dotenv
 scrapy
 pandas
 openpyxl
-scrapy
 itemloaders
+openpyxl
