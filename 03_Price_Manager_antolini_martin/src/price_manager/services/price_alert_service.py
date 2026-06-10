@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from price_manager.repositories.repositories import RepositorioProducto
+from price_manager.services.audit_service import auditar_accion
 
 
 def _obtener_attr(objeto: Any, nombre: str, default: Any = None) -> Any:
@@ -179,7 +180,7 @@ def comparar_item_web(
     "fuente": item_web.get("fuente", ""),
   }
 
-
+@auditar_accion("generar_alertas_precios")
 def generar_alertas_precios(
   ruta_resultados_web: str | Path,
   ruta_alertas_csv: str | Path,
@@ -254,7 +255,7 @@ def generar_alertas_precios(
 
   return comparaciones
 
-
+@auditar_accion("ejecutar_scraper_y_generar_alertas")
 def ejecutar_scraper_y_generar_alertas(
   productos: list[str] | None = None,
   diferencia_maxima_porcentaje: float = 20.0,
