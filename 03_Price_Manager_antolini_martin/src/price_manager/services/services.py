@@ -74,7 +74,7 @@ class ServicioCategoria:
     """Elimina una categoría por id."""
     return self._repositorio.eliminar(id_categoria)
 
-
+@auditar_clase_servicio
 class ServicioProveedor:
   """Aplica lógica de negocio para proveedores."""
 
@@ -133,6 +133,7 @@ class ServicioProveedor:
     return self._repositorio.eliminar(id_proveedor)
 
 
+@auditar_clase_servicio
 class ServicioProducto:
   """Aplica lógica de negocio para productos."""
 
@@ -258,6 +259,7 @@ class ServicioProducto:
         escritor.writerow(fila)
 
 
+@auditar_clase_servicio
 class ServicioStock:
   """Aplica lógica de negocio para stock."""
 
@@ -302,6 +304,7 @@ class ServicioStock:
     return self._repositorio_stock.eliminar(id_producto)
 
 
+@auditar_clase_servicio 
 class ServicioCotizacionDolar:
   """Aplica lógica de negocio para cotizaciones de dólar."""
 
