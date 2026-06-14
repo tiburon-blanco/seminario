@@ -259,148 +259,190 @@ class StarComputacionSpider(scrapy.Spider):
             )
 
   def parse_detalle_producto(self, response):
+        """Extrae los datos de detalle de un producto."""
+        producto_buscado = response.meta.get("producto_buscado")
 
-
-    """Extrae los datos de detalle de un producto."""
-    loader = StarComputacionLoader(response=response)
-
-    loader.add_value(
-        "producto_buscado",
-        response.meta.get("producto_buscado"),
-    )
-
-    loader.add_css("titulo", "h1::text")
-    loader.add_css("titulo", "h1 *::text")
-    loader.add_css("titulo", ".product-title::text")
-    loader.add_css("titulo", ".title::text")
-    loader.add_css("titulo", 'meta[property="og:title"]::attr(content)')
-
-    loader.add_css("precio", ".price::text")
-    loader.add_css("precio", ".price *::text")
-    loader.add_css("precio", ".precio::text")
-    loader.add_css("precio", ".precio *::text")
-    loader.add_xpath("precio", "//*[contains(text(), '$')]/text()")
-
-    loader.add_css(
-        "imagen_url",
-        'meta[property="og:image"]::attr(content)',
-    )
-    loader.add_css("imagen_url", "img::attr(src)")
-    loader.add_css("imagen_url", "img::attr(data-src)")
-
-    loader.add_css("formas_pago", ".payment::text")
-    loader.add_css("formas_pago", ".payment *::text")
-    loader.add_css("formas_pago", ".cuotas::text")
-    loader.add_css("formas_pago", ".cuotas *::text")
-    loader.add_xpath(
-        "formas_pago",
-        "//*[contains(translate(text(), 'CUOTAS', 'cuotas'), 'cuotas')]/text()",
-    )
-
-    loader.add_css("precio_forma_pago", ".payment::text")
-    loader.add_css("precio_forma_pago", ".payment *::text")
-    loader.add_css("precio_forma_pago", ".cuotas::text")
-    loader.add_css("precio_forma_pago", ".cuotas *::text")
-    loader.add_xpath(
-        "precio_forma_pago",
-        "//*[contains(text(), '$')]/text()",
-    )
-
-    loader.add_css("descripcion_detallada", ".description::text")
-    loader.add_css("descripcion_detallada", ".description *::text")
-    loader.add_css("descripcion_detallada", ".descripcion::text")
-    loader.add_css("descripcion_detallada", ".descripcion *::text")
-    loader.add_css(
-        "descripcion_detallada",
-        'meta[name="description"]::attr(content)',
-    )
-    loader.add_css(
-        "descripcion_detallada",
-        'meta[property="og:description"]::attr(content)',
-    )
-
-    loader.add_value("url", response.url)
-    loader.add_value("fuente", self.base_url)
-
-    item = loader.load_item()
-
-    if not item.get("titulo") or str(item.get("titulo")).strip() in {"-1", "STAR"}:
-        item["titulo"] = self.titulo_desde_url(response.url)
-
-    if "logo_top_star" in str(item.get("imagen_url", "")):
-        item["imagen_url"] = self.extraer_imagen_producto(response)
-
-    if "resources =" in str(item.get("formas_pago", "")):
-        item["formas_pago"] = self.extraer_formas_pago_limpias(response.text)
-
-    if "this.addEvent" in str(item.get("precio_forma_pago", "")):
-        item["precio_forma_pago"] = self.extraer_precio_forma_pago(
-            item.get("precio"),
+        titulo = self.extraer_titulo_producto(response)
+        precio = self.extraer_precio_producto(response)
+        imagen_url = self.extraer_imagen_producto(response)
+        formas_pago = self.extraer_formas_pago_limpias(response.text)
+        precio_forma_pago = self.extraer_precio_forma_pago(precio)
+        descripcion_detallada = self.extraer_descripcion_producto(
+            response,
+            titulo,
         )
 
-    if str(item.get("descripcion_detallada", "")).strip() in {"", "STAR"}:
-        item["descripcion_detallada"] = item.get("titulo")
+        item = {
+            "producto_buscado": producto_buscado,
+            "titulo": titulo,
+            "precio": precio,
+            "imagen_url": imagen_url,
+            "formas_pago": formas_pago,
+            "precio_forma_pago": precio_forma_pago,
+            "descripcion_detallada": descripcion_detallada,
+            "url": response.url,
+            "fuente": self.base_url,
+        }
 
-    yield item
+        yield item 
 
-    yield loader.load_item()
+  def limpiar_texto(self, valor: str | None) -> str:
+        """Limpia espacios y saltos de linea."""
+        if not valor:
+            return ""
 
+        return " ".join(str(valor).split())
 
+  def extraer_titulo_producto(self, response) -> str:
+        """Extrae el titulo del producto."""
+        selectores = [
+            "h1::text",
+            "h1 *::text",
+            ".product-title::text",
+            ".title::text",
+            'meta[property="og:title"]::attr(content)',
+        ]
 
-    """Extrae los datos solicitados desde el detalle del producto."""
-    loader = StarComputacionLoader(response=response)
+        for selector in selectores:
+            textos = response.css(selector).getall()
 
-    loader.add_value("producto_buscado", response.meta["producto_buscado"])
-    loader.add_value("url", response.url)
-    loader.add_value("fuente", "Star Computación")
+            for texto in textos:
+                texto_limpio = self.limpiar_texto(texto)
 
-    # Título del producto.
-    loader.add_css("titulo", "h1::text")
-    loader.add_css("titulo", 'meta[property="og:title"]::attr(content)')
-    loader.add_css("titulo", ".product-name::text")
-    loader.add_css("titulo", ".js-product-name::text")
-    loader.add_css("titulo", '[class*="title"]::text')
+                if texto_limpio and texto_limpio.upper() != "STAR":
+                    return texto_limpio
 
-    # Precio.
-    loader.add_css("precio", ".price::text")
-    loader.add_xpath("precio", "//*[contains(text(), '$')]/text()")
-    loader.add_css("precio", ".js-price-display::text")
-    loader.add_css("precio", '[class*="price"]::text')
-    loader.add_css("precio", '[class*="precio"]::text')
-    # Imagen.
-    loader.add_css("imagen_url", "img::attr(src)")
-    loader.add_css("imagen_url", 'meta[property="og:image"]::attr(content)')
-    loader.add_css("imagen_url", "img::attr(data-src)")
-    loader.add_css("imagen_url", "img::attr(data-original)")
+        return self.titulo_desde_url(response.url)
 
-    # Formas de pago.
-    loader.add_css("formas_pago", '[class*="payment"] *::text')
-    loader.add_css("formas_pago", '[class*="pago"] *::text')
-    loader.add_css("formas_pago", '[class*="cuota"] *::text')
-    loader.add_css("formas_pago", '[class*="installment"] *::text')
+  def extraer_precio_producto(self, response) -> str:
+        """Extrae el precio evitando scripts."""
+        textos = response.xpath(
+            "//*[not(self::script) and not(self::style)]"
+            "/text()[contains(., '$') or contains(., 'ARS')]"
+        ).getall()
 
-    # Precio por forma de pago o cuotas.
-    loader.add_css("precio_forma_pago", '[class*="installment"]::text')
-    loader.add_css("precio_forma_pago", '[class*="cuota"]::text')
-    loader.add_css("precio_forma_pago", '[class*="payment"]::text')
-    loader.add_css("precio_forma_pago", '[class*="pago"]::text')
+        for texto in textos:
+            texto_limpio = self.limpiar_texto(texto)
 
-    # Descripción detallada.
-    loader.add_css("descripcion_detallada", ".description *::text")
-    loader.add_css("descripcion_detallada", ".product-description *::text")
-    loader.add_css("descripcion_detallada", '[class*="description"] *::text')
-    loader.add_css("descripcion_detallada", '[class*="descripcion"] *::text')
-    loader.add_css("descripcion_detallada", ".tab-content *::text")
-    loader.add_css(
-      "descripcion_detallada",
-      'meta[name="description"]::attr(content)',
-    )
-    loader.add_css(
-      "descripcion_detallada",
-      'meta[property="og:description"]::attr(content)',
-    )
+            if not texto_limpio:
+                continue
 
-    yield loader.load_item()
+            if "resources =" in texto_limpio:
+                continue
+
+            if "this.addEvent" in texto_limpio:
+                continue
+
+            if len(texto_limpio) > 80:
+                continue
+
+            if re.search(r"\d", texto_limpio):
+                return texto_limpio
+
+        coincidencia = re.search(
+            r"ARS\s*[0-9]+(?:[.,][0-9]+)?",
+            response.text,
+        )
+
+        if coincidencia:
+            return self.limpiar_texto(coincidencia.group(0))
+
+        return ""
+
+  def extraer_imagen_producto(self, response) -> str:
+        """Extrae una imagen real del producto evitando el logo del sitio."""
+        coincidencia = re.search(
+            r'"img_1":"([^"]+)"',
+            response.text,
+        )
+
+        if coincidencia:
+            archivo = coincidencia.group(1)
+            return f"https://www.starcomputacion.com.ar/files/products/{archivo}"
+
+        imagenes = []
+        imagenes.extend(
+            response.css('meta[property="og:image"]::attr(content)').getall()
+        )
+        imagenes.extend(response.css("img::attr(src)").getall())
+        imagenes.extend(response.css("img::attr(data-src)").getall())
+
+        for imagen in imagenes:
+            if not imagen:
+                continue
+
+            if "logo_top_star" in imagen:
+                continue
+
+            if "/products/" in imagen or "/files/" in imagen:
+                return response.urljoin(imagen)
+
+        return ""
+
+  def extraer_formas_pago_limpias(self, html: str) -> str:
+        """Extrae formas de pago limpias evitando scripts."""
+        html_mayuscula = html.upper()
+        formas = []
+
+        if "6 CUOTAS" in html_mayuscula:
+            formas.append("6 cuotas")
+
+        if "12 CUOTAS" in html_mayuscula:
+            formas.append("12 cuotas")
+
+        if "TRANSFERENCIA" in html_mayuscula:
+            formas.append("transferencia bancaria")
+
+        if "MERCADO PAGO" in html_mayuscula or "MERPAGO" in html_mayuscula:
+            formas.append("Mercado Pago")
+
+        return " | ".join(formas)
+
+  def extraer_precio_forma_pago(self, precio: str | None) -> str:
+        """Calcula una referencia simple de precio por cuota."""
+        if not precio:
+            return ""
+
+        numeros = re.sub(r"[^\d]", "", str(precio))
+
+        if not numeros:
+            return ""
+
+        valor = float(numeros)
+        cuota_6 = valor / 6
+
+        return f"6 cuotas de ARS {cuota_6:.2f}"
+
+  def extraer_descripcion_producto(self, response, titulo: str) -> str:
+        """Extrae una descripcion valida del producto."""
+        selectores = [
+            'meta[name="description"]::attr(content)',
+            'meta[property="og:description"]::attr(content)',
+            ".description::text",
+            ".descripcion::text",
+        ]
+
+        for selector in selectores:
+            textos = response.css(selector).getall()
+
+            for texto in textos:
+                texto_limpio = self.limpiar_texto(texto)
+
+                if not texto_limpio:
+                    continue
+
+                if texto_limpio.upper() == "STAR":
+                    continue
+
+                if "resources =" in texto_limpio:
+                    continue
+
+                if "this.addEvent" in texto_limpio:
+                    continue
+
+                return texto_limpio
+
+        return titulo
 
   def titulo_desde_url(self, url: str) -> str:
     """Genera un titulo legible desde el slug de la URL."""
