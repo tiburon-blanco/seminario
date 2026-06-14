@@ -165,6 +165,22 @@ class StarComputacionSpider(scrapy.Spider):
         """Metodo inicial compatible con versiones anteriores de Scrapy."""
         yield from self.generar_solicitudes_iniciales()
   
+  def producto_coincide_con_busqueda(
+        self,
+        producto_buscado: str,
+        url: str,
+    ) -> bool:
+        """Valida que la URL del producto tenga relación con la búsqueda."""
+        texto = url.lower()
+
+        palabras = [
+            palabra.lower()
+            for palabra in producto_buscado.replace("-", " ").split()
+            if len(palabra) >= 3
+        ]
+
+        return any(palabra in texto for palabra in palabras)
+
   def parse_resultados_busqueda(self, response):
         """Procesa una pagina de categoria o busqueda y obtiene productos."""
         producto_buscado = response.meta.get("producto_buscado")
@@ -211,6 +227,9 @@ class StarComputacionSpider(scrapy.Spider):
             if not es_producto or es_categoria:
                 continue
 
+            if not self.producto_coincide_con_busqueda(producto_buscado, url):
+                continue
+
             if url in self.urls_vistas:
                 continue
 
@@ -240,6 +259,8 @@ class StarComputacionSpider(scrapy.Spider):
             )
 
   def parse_detalle_producto(self, response):
+
+
     """Extrae los datos de detalle de un producto."""
     loader = StarComputacionLoader(response=response)
 
@@ -301,6 +322,27 @@ class StarComputacionSpider(scrapy.Spider):
     loader.add_value("url", response.url)
     loader.add_value("fuente", self.base_url)
 
+    item = loader.load_item()
+
+    if not item.get("titulo") or str(item.get("titulo")).strip() in {"-1", "STAR"}:
+        item["titulo"] = self.titulo_desde_url(response.url)
+
+    if "logo_top_star" in str(item.get("imagen_url", "")):
+        item["imagen_url"] = self.extraer_imagen_producto(response)
+
+    if "resources =" in str(item.get("formas_pago", "")):
+        item["formas_pago"] = self.extraer_formas_pago_limpias(response.text)
+
+    if "this.addEvent" in str(item.get("precio_forma_pago", "")):
+        item["precio_forma_pago"] = self.extraer_precio_forma_pago(
+            item.get("precio"),
+        )
+
+    if str(item.get("descripcion_detallada", "")).strip() in {"", "STAR"}:
+        item["descripcion_detallada"] = item.get("titulo")
+
+    yield item
+
     yield loader.load_item()
 
 
@@ -359,3 +401,64 @@ class StarComputacionSpider(scrapy.Spider):
     )
 
     yield loader.load_item()
+
+  def titulo_desde_url(self, url: str) -> str:
+    """Genera un titulo legible desde el slug de la URL."""
+    slug = url.rstrip("/").split("/")[-1]
+    partes = slug.split("-")
+
+    if partes and partes[-1].isdigit():
+        partes = partes[:-1]
+
+    return " ".join(partes).title()
+
+
+  def extraer_imagen_producto(self, response) -> str:
+    """Extrae una imagen de producto evitando el logo del sitio."""
+    imagenes = response.css("img::attr(src)").getall()
+    imagenes.extend(response.css("img::attr(data-src)").getall())
+
+    for imagen in imagenes:
+        if not imagen:
+            continue
+
+        if "logo_top_star" in imagen:
+            continue
+
+        if "/products/" in imagen or "/files/" in imagen:
+            return response.urljoin(imagen)
+
+    return ""
+
+
+  def extraer_formas_pago_limpias(self, html: str) -> str:
+    """Extrae formas de pago simples evitando scripts completos."""
+    html_mayuscula = html.upper()
+    formas = []
+
+    if "CUOTA" in html_mayuscula or "CUOTAS" in html_mayuscula:
+        formas.append("cuotas")
+
+    if "TRANSFERENCIA" in html_mayuscula:
+        formas.append("transferencia")
+
+    if "TARJETA" in html_mayuscula:
+        formas.append("tarjeta")
+
+    return " | ".join(formas)
+
+
+  def extraer_precio_forma_pago(self, precio: str | None) -> str:
+    """Calcula una referencia simple de pago en cuotas."""
+    if not precio:
+        return ""
+
+    numeros = re.sub(r"[^\d]", "", str(precio))
+
+    if not numeros:
+        return ""
+
+    valor = float(numeros)
+    cuota_6 = valor / 6
+
+    return f"6 cuotas de ARS {cuota_6:.2f}"

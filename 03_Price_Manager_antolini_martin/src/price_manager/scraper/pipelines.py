@@ -10,21 +10,50 @@ class StarComputacionValidationPipeline:
   """Valida que el item tenga los datos mínimos requeridos."""
 
   def process_item(self, item, spider):
-    """Procesa y valida un item scrapeado."""
-    if not item.get("producto_buscado"):
-      raise DropItem("Item descartado: falta producto_buscado.")
+      """Procesa y valida un item scrapeado."""
+      if not item.get("producto_buscado"):
+        raise DropItem("Item descartado: falta producto_buscado.")
 
-    if not item.get("url"):
-      raise DropItem("Item descartado: falta url.")
+      if not item.get("url"):
+        raise DropItem("Item descartado: falta url.")
 
-    if not item.get("precio"):
-      spider.logger.warning(
-        "Item sin precio detectado para producto: %s",
-        item.get("producto_buscado"),
-      )
+      if not item.get("precio"):
+        spider.logger.warning(
+          "Item sin precio detectado para producto: %s",
+          item.get("producto_buscado"),
+        )
 
-    return item
+      campos_invalidos = [
+        "resources =",
+        "this.addEvent",
+        "function(){",
+        "function ()",
+        "<script",
+      ]
 
+      for campo in [
+        "formas_pago",
+        "precio_forma_pago",
+        "descripcion_detallada",
+      ]:
+        valor = str(item.get(campo, ""))
+
+        if any(texto in valor for texto in campos_invalidos):
+          raise DropItem(
+            f"Campo inválido detectado en {campo}: contiene JavaScript"
+          )
+
+      if "logo_top_star" in str(item.get("imagen_url", "")):
+        raise DropItem(
+          "La imagen corresponde al logo del sitio, no al producto"
+        )
+
+      if str(item.get("descripcion_detallada", "")).strip() in {"", "STAR"}:
+        raise DropItem(
+          "La descripción detallada no es válida."
+        )
+
+      return item
 
 class StarComputacionDuplicatesPipeline:
   """Evita guardar resultados duplicados usando la URL como clave."""
