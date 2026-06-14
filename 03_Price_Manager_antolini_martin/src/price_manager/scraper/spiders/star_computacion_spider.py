@@ -24,8 +24,67 @@ class StarComputacionSpider(scrapy.Spider):
     "https://www.starcomputacion.com.ar/?s={query}",
     "https://www.starcomputacion.com.ar/buscar/{query}",
 ]
+  category_urls_by_keyword = {
+        "notebook": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/notebooks-10/",
+            "https://www.starcomputacion.com.ar/prods/computacin-1/lenovo-109/",
+        ],
+        "lenovo": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/notebooks-10/",
+            "https://www.starcomputacion.com.ar/prods/computacin-1/lenovo-109/",
+        ],
+        "mouse": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/mouses-y-pads-23/",
+        ],
+        "logitech": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/mouses-y-pads-23/",
+        ],
+        "teclado": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/teclados-27/",
+        ],
+        "redragon": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/teclados-27/",
+        ],
+        "monitor": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/monitores-13/",
+        ],
+        "samsung": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/monitores-13/",
+        ],
+        "ssd": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/discos-36/",
+        ],
+        "kingston": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/discos-36/",
+        ],
+        "router": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/router-223/",
+        ],
+        "tp-link": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/router-223/",
+        ],
+        "impresora": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/impresoras-14/",
+        ],
+        "hp": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/impresoras-14/",
+        ],
+        "auriculares": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/auriculares-gamers-37/",
+        ],
+        "hyperx": [
+            "https://www.starcomputacion.com.ar/prods/computacin-1/auriculares-gamers-37/",
+        ],
+        "hub": [
+            "https://www.starcomputacion.com.ar/prods/electronica-2/hubs-y-adaptadores-267/",
+        ],
+        "usb": [
+            "https://www.starcomputacion.com.ar/prods/electronica-2/hubs-y-adaptadores-267/",
+        ],
+    }
 
   def __init__(
+    
       self,
       productos=None,
       limite_por_busqueda=10,
@@ -54,25 +113,45 @@ class StarComputacionSpider(scrapy.Spider):
     self.limite_por_busqueda = int(limite_por_busqueda)
     self.output_path = output_path
 
+  def obtener_urls_para_producto(self, producto: str) -> list[str]:
+        """Obtiene URLs de busqueda y categorias asociadas al producto."""
+        urls = [
+            search_url.format(query=quote_plus(producto))
+            for search_url in self.search_urls
+        ]
+
+        producto_normalizado = producto.lower()
+
+        for palabra_clave, category_urls in self.category_urls_by_keyword.items():
+            if palabra_clave in producto_normalizado:
+                urls.extend(category_urls)
+
+        urls_unicas = []
+
+        for url in urls:
+            if url not in urls_unicas:
+                urls_unicas.append(url)
+
+        return urls_unicas
+
   def generar_solicitudes_iniciales(self):
-          """Genera solicitudes iniciales para cada producto propio."""
-          if not self.productos:
-              self.logger.warning("No se recibieron productos para buscar.")
-              return
+        """Genera solicitudes iniciales para cada producto propio."""
+        if not self.productos:
+            self.logger.warning("No se recibieron productos para buscar.")
+            return
 
-          for producto in self.productos:
-              for search_url in self.search_urls:
-                  url = search_url.format(query=quote_plus(producto))
-
-                  yield scrapy.Request(
-                      url=url,
-                      callback=self.parse_resultados_busqueda,
-                      meta={
-                          "producto_buscado": producto,
-                      },
-                      dont_filter=True,
+        for producto in self.productos:
+            for url in self.obtener_urls_para_producto(producto):
+                yield scrapy.Request(
+                    url=url,
+                    callback=self.parse_resultados_busqueda,
+                    meta={
+                        "producto_buscado": producto,
+                    },
+                    dont_filter=True,
                 )
 
+  
   async def start(self):
         """Metodo inicial compatible con Scrapy 2.13 o superior."""
         for request in self.generar_solicitudes_iniciales():
