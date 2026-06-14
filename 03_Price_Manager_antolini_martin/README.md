@@ -217,3 +217,30 @@ Sprint_3
 
 La variable `desactivar_git_push` se mantiene en `main.py` para permitir el
 traceo requerido por la consigna.
+
+Organizacion del Notebook
+
+El notebook de Colab se encuentra organizado por ejercicios y cada funcionalidad se agrupa en celdas con titulo.
+
+Antes del Ejercicio 01 se incluye una celda de importaciones generales y configuracion inicial. Luego, cada ejercicio contiene celdas de verificacion, prueba controlada y conclusion.
+
+El notebook no reescribe innecesariamente los modulos con %%writefile, porque el codigo fuente se desarrolla y versiona directamente en archivos .py dentro del repositorio. Colab clona la rama Sprint_3 y ejecuta los modulos desde la estructura real del proyecto.
+
+Versionado
+
+El desarrollo del Sprint 3 parte de la rama Sprint_2 y se realiza en la rama:
+
+Sprint_3
+
+La variable desactivar_git_push se mantiene en main.py para permitir el traceo requerido por la consigna.
+
+Archivos generados no versionados
+
+Durante la ejecucion pueden generarse archivos o carpetas temporales:
+
+data/
+tmp_ejercicio_02/
+price_manager.db
+*.sqlite3
+
+Estos archivos son productos de ejecucion y no forman parte del codigo fuente versionado.
