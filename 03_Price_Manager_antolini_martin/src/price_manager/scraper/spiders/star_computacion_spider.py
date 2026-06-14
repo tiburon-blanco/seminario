@@ -17,8 +17,12 @@ class StarComputacionSpider(scrapy.Spider):
   allowed_domains = ["starcomputacion.com.ar"]
 
   base_url = "https://www.starcomputacion.com.ar"
-  search_url = "https://www.starcomputacion.com.ar/search/?q={query}"
 
+  search_urls = [
+  "https://www.starcomputacion.com.ar/search/?q={query}",
+  "https://www.starcomputacion.com.ar/?s={query}",
+]
+  
   def __init__(
     self,
     productos: str | None = None,
@@ -49,35 +53,42 @@ class StarComputacionSpider(scrapy.Spider):
     self.limite_por_busqueda = int(limite_por_busqueda)
     self.output_path = output_path
 
-  def start_requests(self):
-    """Genera las solicitudes de búsqueda para productos propios."""
+    def start_requests(self):
+      """Genera las solicitudes de busqueda para productos propios."""
     if not self.productos:
       self.logger.warning("No se recibieron productos para buscar.")
       return
 
     for producto in self.productos:
-      url = self.search_url.format(query=quote_plus(producto))
+      for search_url in self.search_urls:
+        url = search_url.format(query=quote_plus(producto))
 
-      yield scrapy.Request(
-        url=url,
-        callback=self.parse_resultados_busqueda,
-        meta={
-          "producto_buscado": producto,
-        },
-      )
+        yield scrapy.Request(
+          url=url,
+          callback=self.parse_resultados_busqueda,
+          meta={
+            "producto_buscado": producto,
+          },
+          dont_filter=True,
+        )
 
   def parse_resultados_busqueda(self, response):
     """Procesa los resultados de búsqueda y toma hasta 10 enlaces."""
     producto_buscado = response.meta["producto_buscado"]
 
-    enlaces = response.css('a[href*="/productos/"]::attr(href)').getall()
+    enlaces = []
+
+    selectores_enlaces = [
+      'a[href*="/prod/"]::attr(href)',
+      'a[href*="/productos/"]::attr(href)',
+      'a[href*="/producto/"]::attr(href)',
+    ]
+
+    for selector in selectores_enlaces:
+      enlaces.extend(response.css(selector).getall())
 
     if not enlaces:
-      enlaces = response.css('a[href*="/producto/"]::attr(href)').getall()
-
-    if not enlaces:
-      enlaces = response.css("a::attr(href)").re(r".*producto.*")
-
+      enlaces = response.css("a::attr(href)").re(r".*/prod/.*")
     enlaces_unicos = []
 
     for enlace in enlaces:
