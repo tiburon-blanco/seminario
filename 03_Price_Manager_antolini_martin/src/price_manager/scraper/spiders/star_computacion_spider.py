@@ -1,10 +1,13 @@
 """Spider para obtener precios de Star Computacion."""
 
 from __future__ import annotations
+import re
+from html import unescape
 
 from urllib.parse import quote_plus
 
 import scrapy
+
 
 from price_manager.scraper.loaders import StarComputacionLoader
 
@@ -112,6 +115,8 @@ class StarComputacionSpider(scrapy.Spider):
 
     self.limite_por_busqueda = int(limite_por_busqueda)
     self.output_path = output_path
+    self.urls_vistas = set()
+    self.cantidad_por_producto = {}
 
   def obtener_urls_para_producto(self, producto: str) -> list[str]:
         """Obtiene URLs de busqueda y categorias asociadas al producto."""
@@ -151,7 +156,6 @@ class StarComputacionSpider(scrapy.Spider):
                     dont_filter=True,
                 )
 
-  
   async def start(self):
         """Metodo inicial compatible con Scrapy 2.13 o superior."""
         for request in self.generar_solicitudes_iniciales():
@@ -160,72 +164,80 @@ class StarComputacionSpider(scrapy.Spider):
   def start_requests(self):
         """Metodo inicial compatible con versiones anteriores de Scrapy."""
         yield from self.generar_solicitudes_iniciales()
-
-
+  
   def parse_resultados_busqueda(self, response):
-    """Procesa resultados de busqueda y obtiene enlaces de productos."""
-    producto_buscado = response.meta.get("producto_buscado")
+        """Procesa una pagina de categoria o busqueda y obtiene productos."""
+        producto_buscado = response.meta.get("producto_buscado")
 
-    # Si la busqueda redirige directamente a un producto, se procesa.
-    es_producto_actual = (
-        "/prod/" in response.url
-        or "/producto/" in response.url
-    )
-    es_categoria_actual = "/prods/" in response.url
+        es_producto_actual = "/prod/" in response.url
+        es_categoria_actual = "/prods/" in response.url
 
-    if es_producto_actual and not es_categoria_actual:
-        yield from self.parse_detalle_producto(response)
-        return
+        if es_producto_actual and not es_categoria_actual:
+            yield from self.parse_detalle_producto(response)
+            return
 
-    enlaces = []
+        enlaces = []
 
-    selectores_enlaces = [
-        'a[href*="/prod/"]::attr(href)',
-        'a[href*="/producto/"]::attr(href)',
-        'a[href*="/productos/"]::attr(href)',
-    ]
+        # 1) Buscar todos los href del HTML.
+        enlaces.extend(response.css("a::attr(href)").getall())
 
-    for selector in selectores_enlaces:
-        enlaces.extend(response.css(selector).getall())
+        # 2) Buscar enlaces dentro del HTML crudo.
+        html_normalizado = unescape(response.text)
+        html_normalizado = html_normalizado.replace("\\/", "/")
+        html_normalizado = html_normalizado.replace("\\u002F", "/")
 
-    if not enlaces:
-        enlaces = response.css("a::attr(href)").re(r".*/prod/.*")
+        patrones = [
+            r"https?://(?:www\.)?starcomputacion\.com\.ar/prod/[^\"'\s<>]+",
+            r"/prod/[^\"'\s<>]+",
+            r"prod/[^\"'\s<>]+",
+        ]
 
-    enlaces_unicos = []
+        for patron in patrones:
+            enlaces.extend(re.findall(patron, html_normalizado))
 
-    for enlace in enlaces:
-        url = response.urljoin(enlace)
+        enlaces_unicos = []
+        cantidad_actual = self.cantidad_por_producto.get(producto_buscado, 0)
 
-        es_producto = (
-            "/prod/" in url
-            or "/producto/" in url
-        )
-        es_categoria = "/prods/" in url
+        for enlace in enlaces:
+            url = response.urljoin(enlace)
 
-        if not es_producto or es_categoria:
-            continue
+            url = url.split("#")[0]
+            url = url.split("?")[0]
+            url = url.rstrip(".,);'\"")
 
-        if url not in enlaces_unicos:
+            es_producto = "/prod/" in url
+            es_categoria = "/prods/" in url
+
+            if not es_producto or es_categoria:
+                continue
+
+            if url in self.urls_vistas:
+                continue
+
+            if cantidad_actual >= self.limite_por_busqueda:
+                break
+
+            self.urls_vistas.add(url)
             enlaces_unicos.append(url)
 
-        if len(enlaces_unicos) >= self.limite_por_busqueda:
-            break
+            cantidad_actual += 1
+            self.cantidad_por_producto[producto_buscado] = cantidad_actual
 
-    if not enlaces_unicos:
-        self.logger.warning(
-            "No se encontraron productos para la busqueda: %s",
-            producto_buscado,
-        )
+        if not enlaces_unicos:
+            self.logger.warning(
+                "No se encontraron productos para la busqueda: %s",
+                producto_buscado,
+            )
 
-    for url in enlaces_unicos:
-        yield scrapy.Request(
-            url=url,
-            callback=self.parse_detalle_producto,
-            meta={
-                "producto_buscado": producto_buscado,
-            },
-            dont_filter=True,
-        )
+        for url in enlaces_unicos:
+            yield scrapy.Request(
+                url=url,
+                callback=self.parse_detalle_producto,
+                meta={
+                    "producto_buscado": producto_buscado,
+                },
+                dont_filter=True,
+            )
 
   def parse_detalle_producto(self, response):
     """Extrae los datos de detalle de un producto."""
