@@ -17,17 +17,95 @@ from price_manager.scraper.spiders.star_computacion_spider import (
 
 @auditar_accion("obtener_nombres_productos_propios")
 def obtener_nombres_productos_propios() -> list[str]:
-  """Obtiene los nombres de productos propios desde la base de datos."""
-  ConexionDB().crear_tablas()
+    """Obtiene los nombres de productos propios para usar en el scraper.
 
-  repositorio = RepositorioProducto()
-  productos = repositorio.leer_todos()
+    Primero intenta obtener productos desde la base de datos.
+    Si la base no devuelve resultados, utiliza el archivo productos.csv
+    de la precarga del proyecto.
+    """
+    productos: list[str] = []
 
-  return [
-    producto.nombre
-    for producto in productos
-    if getattr(producto, "nombre", None)
-  ]
+    try:
+        from price_manager.database.connection import ConexionDB
+        from price_manager.models.models import ProductoModel
+
+        conexion = ConexionDB()
+        session = conexion.obtener_sesion()
+
+        try:
+            registros = session.query(ProductoModel).all()
+
+            for registro in registros:
+                nombre = getattr(registro, "nombre", None)
+
+                if nombre:
+                    productos.append(str(nombre).strip())
+        finally:
+            session.close()
+
+    except Exception:
+        productos = []
+
+    productos = [
+        producto
+        for producto in productos
+        if producto
+    ]
+
+    if productos:
+        return productos
+
+    # Fallback: productos propios desde productos.csv
+    import csv
+    from pathlib import Path
+
+    ruta_csv = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "csv"
+        / "productos.csv"
+    )
+
+    if not ruta_csv.exists():
+        return []
+
+    contenido = ruta_csv.read_text(encoding="utf-8-sig")
+    primera_linea = contenido.splitlines()[0]
+
+    delimitador = ";" if primera_linea.count(";") > primera_linea.count(",") else ","
+
+    lector = csv.DictReader(
+        contenido.splitlines(),
+        delimiter=delimitador,
+    )
+
+    columnas = lector.fieldnames or []
+
+    posibles_columnas_nombre = [
+        "nombre",
+        "nombre_producto",
+        "producto",
+        "descripcion",
+        "titulo",
+    ]
+
+    columna_nombre = None
+
+    for columna in posibles_columnas_nombre:
+        if columna in columnas:
+            columna_nombre = columna
+            break
+
+    if columna_nombre is None:
+        return []
+
+    productos_csv = [
+        fila[columna_nombre].strip()
+        for fila in lector
+        if fila.get(columna_nombre) and fila[columna_nombre].strip()
+    ]
+
+    return productos_csv
 
 @auditar_accion("ejecutar_scraper_star_computacion")
 def ejecutar_scraper_star_computacion(
